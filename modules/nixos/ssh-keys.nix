@@ -16,7 +16,7 @@ let
 
   # Filter files by username if specified
   filteredKeyFiles = if cfg.username != null then
-    filter (file: strings.hasInfix cfg.username file) pubKeyFiles
+    filter (file: strings.hasPrefix "${cfg.username}@" file) pubKeyFiles
   else pubKeyFiles;
 
   # Read content of each filtered public key file
