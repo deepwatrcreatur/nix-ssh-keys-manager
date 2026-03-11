@@ -14,17 +14,15 @@ let
     )
   else [];
 
-  # Read content of each public key file
-  pubKeys = map (file: 
+  # Filter files by username if specified
+  filteredKeyFiles = if cfg.username != null then
+    filter (file: strings.hasPrefix "${cfg.username}@" file) pubKeyFiles
+  else pubKeyFiles;
+
+  # Read content of each filtered public key file
+  userKeys = map (file: 
     strings.trim (builtins.readFile (cfg.keysDirectory + "/${file}"))
-  ) pubKeyFiles;
-  
-  # Filter keys by username if specified
-  userKeys = if cfg.username != null then
-    filter (key: 
-      any (file: strings.hasInfix cfg.username file) pubKeyFiles
-    ) pubKeys
-  else pubKeys;
+  ) filteredKeyFiles;
 
 in
 {
