@@ -14,32 +14,20 @@ let
         !(hasPrefix "#" (strings.trim line)) && (strings.trim line) != ""
       ) lines);
       
-      # Parse pairs of Host/Hostname
-      parseLines = lines: acc:
-        if lines == [] then acc
-        else
+      # Parse pairs of Host/Hostname anywhere within the block
+      parsed = foldl (state: line:
+        if hasPrefix "Host " line && line != "Host *" then
+          { inherit (state) map; currentHost = removePrefix "Host " line; }
+        else if state.currentHost != null && (hasPrefix "Hostname " line || hasPrefix "HostName " line) then
           let
-            line = head lines;
-            rest = tail lines;
+            ip = if hasPrefix "Hostname " line then removePrefix "Hostname " line else removePrefix "HostName " line;
           in
-          if hasPrefix "Host " line && line != "Host *" then
-            let
-              hostname = removePrefix "Host " line;
-              # Look ahead for Hostname line
-              nextLine = if rest != [] then head rest else "";
-              hasIP = hasPrefix "Hostname " nextLine || hasPrefix "HostName " nextLine;
-              ip = if hasIP then 
-                     removePrefix "Hostname " (removePrefix "HostName " nextLine)
-                   else null;
-            in
-            if ip != null then
-              parseLines (tail rest) (acc // { ${hostname} = ip; })
-            else
-              parseLines rest acc
-          else
-            parseLines rest acc;
+          { map = state.map // { "${state.currentHost}" = ip; }; currentHost = state.currentHost; }
+        else
+          state
+      ) { map = {}; currentHost = null; } cleanLines;
     in
-    parseLines cleanLines {};
+    parsed.map;
   
   hostToIP = if cfg.sshConfigFile != null then
     parseSSHConfig (builtins.readFile cfg.sshConfigFile)
