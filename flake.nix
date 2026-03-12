@@ -11,6 +11,7 @@
       nixosModules = {
         default = import ./modules/nixos/ssh-keys.nix;
         ssh-keys = import ./modules/nixos/ssh-keys.nix;
+        ssh-known-hosts = import ./modules/nixos/ssh-known-hosts.nix;
       };
 
       # Home-manager module for known_hosts management
