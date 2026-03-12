@@ -4,30 +4,9 @@ with lib;
 
 let
   cfg = config.programs.ssh-known-hosts-manager;
-  
-  # Parse ssh-config to extract hostname -> IP mappings
-  parseSSHConfig = content:
-    let
-      lines = splitString "\n" content;
-      # Remove comments and trim
-      cleanLines = map (line: strings.trim line) (filter (line: 
-        !(hasPrefix "#" (strings.trim line)) && (strings.trim line) != ""
-      ) lines);
-      
-      # Parse pairs of Host/Hostname anywhere within the block
-      parsed = foldl (state: line:
-        if hasPrefix "Host " line && line != "Host *" then
-          { inherit (state) map; currentHost = removePrefix "Host " line; }
-        else if state.currentHost != null && (hasPrefix "Hostname " line || hasPrefix "HostName " line) then
-          let
-            ip = if hasPrefix "Hostname " line then removePrefix "Hostname " line else removePrefix "HostName " line;
-          in
-          { map = state.map // { "${state.currentHost}" = ip; }; currentHost = state.currentHost; }
-        else
-          state
-      ) { map = {}; currentHost = null; } cleanLines;
-    in
-    parsed.map;
+
+  # Use the centralized and corrected parser
+  parseSSHConfig = import ../../lib/parse-ssh-config.nix { inherit lib; };
   
   hostToIP = if cfg.sshConfigFile != null then
     parseSSHConfig (builtins.readFile cfg.sshConfigFile)
