@@ -12,6 +12,12 @@
         default = import ./modules/nixos/ssh-keys.nix;
         ssh-keys = import ./modules/nixos/ssh-keys.nix;
         ssh-known-hosts = import ./modules/nixos/ssh-known-hosts.nix;
+        ssh-remote-builder-keys = import ./modules/common/ssh-remote-builder-keys.nix;
+      };
+
+      # Darwin modules
+      darwinModules = {
+        ssh-remote-builder-keys = import ./modules/common/ssh-remote-builder-keys.nix;
       };
 
       # Home-manager module for known_hosts management
