@@ -80,9 +80,10 @@ in
     services.openssh.enable = mkDefault true;
 
     # Enable hybrid authorized_keys: NixOS-managed + user-managed dynamic keys
+    # Include the NixOS default path /etc/ssh/authorized_keys.d/%u for system-managed keys
     services.openssh.extraConfig = mkIf cfg.enableDynamicKeys ''
-      # Check both NixOS-managed and user-managed keys
-      AuthorizedKeysFile .ssh/authorized_keys .ssh/authorized_keys_dynamic
+      # Check NixOS-managed, user ~/.ssh/authorized_keys, and user-managed dynamic keys
+      AuthorizedKeysFile /etc/ssh/authorized_keys.d/%u .ssh/authorized_keys .ssh/authorized_keys_dynamic
     '';
 
     # Create mutable authorized_keys_dynamic file for each configured user
