@@ -5,22 +5,15 @@ with lib;
 let
   cfg = config.programs.ssh-known-hosts-manager;
 
-  # Use the centralized and corrected parser
-  parseSSHConfig = import ../../lib/parse-ssh-config.nix { inherit lib; };
-  
-  hostToIP = if cfg.sshConfigFile != null then
-    parseSSHConfig (builtins.readFile cfg.sshConfigFile)
-  else {};
-  
-  # Read host keys (pattern: {hostname}-host-ed25519.pub)
-  hostKeyFiles = if cfg.keysDirectory != null then
-    builtins.attrNames (
-      filterAttrs (name: type: 
-        type == "regular" && hasSuffix "-host-ed25519.pub" name
-      ) (builtins.readDir cfg.keysDirectory)
-    )
-  else [];
-  
+  knownHostsFromDir = import ../../lib/known-hosts.nix { inherit lib; };
+
+  knownHosts = knownHostsFromDir {
+    keysDirectory = cfg.keysDirectory;
+    sshConfigFile = cfg.sshConfigFile;
+  };
+
+  entries = knownHosts.entries;
+
 in
 {
   options.programs.ssh-known-hosts-manager = {
@@ -48,21 +41,13 @@ in
   };
 
   config = mkIf cfg.enable {
-    programs.ssh.knownHosts = mkMerge (map (file: 
-      let
-        hostname = removeSuffix "-host-ed25519.pub" file;
-        keyContent = strings.trim (builtins.readFile (cfg.keysDirectory + "/${file}"));
-        parts = splitString " " keyContent;
-        keyType = if length parts > 0 then elemAt parts 0 else "ssh-ed25519";
-        keyData = if length parts > 1 then elemAt parts 1 else "";
-        ip = if hostToIP ? ${hostname} then hostToIP.${hostname} else null;
-      in
+    programs.ssh.knownHosts = mkMerge (map (entry:
       {
-        ${hostname} = {
-          hostNames = [ hostname ] ++ optional (ip != null) ip;
-          publicKey = keyType + " " + keyData;
+        ${entry.hostname} = {
+          hostNames = [ entry.hostname ] ++ optional (entry.ip != null) entry.ip;
+          publicKey = entry.keyType + " " + entry.keyData;
         };
       }
-    ) hostKeyFiles);
+    ) entries);
   };
 }
