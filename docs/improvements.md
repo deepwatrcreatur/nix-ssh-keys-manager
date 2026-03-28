@@ -9,7 +9,7 @@ This document tracks notable improvements and ideas for future work.
 - **Flake checks for lib helpers**: Added `checks.<system>.lib-tests` that assert `parseSSHConfig` and `readSSHKeys` behave correctly against sample inputs during `nix flake check`.
 - **Module assertions for required options**: Added assertions to the SSH key and known-hosts modules to require `keysDirectory` (and `username` where applicable) when enabled, failing fast with clear messages for misconfigurations.
 - **Shared SSH key-reading helper**: Introduced `lib/read-ssh-keys-map.nix` and refactored `lib/read-ssh-keys.nix` to use it, centralizing the logic for reading and trimming `.pub` keys.
-- **Shared known-hosts helper and demo apps**: Introduced `lib/known-hosts.nix` and refactored both the NixOS and home-manager `ssh-known-hosts` modules to consume it, ensuring consistent host/IP resolution and known_hosts generation. Added small `nix run .#known-hosts-demo` and `nix run .#authorized-keys-demo` apps that print sample `known_hosts` and `authorized_keys` lines derived from fixtures.
+- **Shared known-hosts helper and demo apps**: Introduced `lib/known-hosts.nix` and refactored both the NixOS and home-manager `ssh-known-hosts` modules to consume it, ensuring consistent host/IP resolution and known_hosts generation. The helper safely parses hostnames from `{hostname}-host-{keytype}.pub` filenames (even when hostnames contain `-host-`) and collapses multiple host keys down to a single preferred key per host (preferring `ssh-ed25519` over `ssh-rsa`). Added small `nix run .#known-hosts-demo` and `nix run .#authorized-keys-demo` apps that print sample `known_hosts` and `authorized_keys` lines derived from fixtures.
 
 ## Future improvement ideas
 
