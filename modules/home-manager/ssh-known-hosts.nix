@@ -58,6 +58,12 @@ in
   };
 
   config = mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = cfg.keysDirectory != null;
+        message = "programs.ssh-known-hosts-manager.keysDirectory must be set when enable = true";
+      }
+    ];
     # Create managed known_hosts file
     home.file."${cfg.outputFile}" = {
       text = ''
