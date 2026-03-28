@@ -48,6 +48,12 @@ in
   };
 
   config = mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = cfg.keysDirectory != null;
+        message = "programs.ssh-known-hosts-manager.keysDirectory must be set when enable = true";
+      }
+    ];
     programs.ssh.knownHosts = mkMerge (map (file: 
       let
         hostname = removeSuffix "-host-ed25519.pub" file;
