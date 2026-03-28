@@ -28,7 +28,7 @@ let
           base = lib.removeSuffix ".pub" file;
           parts = lib.splitString "-host-" base;
         in
-          if lib.length parts < 2 then
+          if lib.length parts < 2 || lib.head parts == "" || lib.last parts == "" then
             throw "Invalid host key filename: ${file} (expected {hostname}-host-{keytype}.pub)"
           else
             lib.concatStringsSep "-host-" (lib.init parts);
@@ -63,7 +63,7 @@ let
         }
       ) {} (map mkEntry hostKeyFiles);
     in
-    map (hostname: byHost.${hostname}) (lib.sort lib.compare (lib.attrNames byHost));
+    map (hostname: byHost.${hostname}) (builtins.attrNames byHost);
 
   knownHostsText = lib.concatStringsSep "\n" (map (e: "${e.hostPattern} ${e.key}") entries);
 
