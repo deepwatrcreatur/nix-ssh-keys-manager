@@ -69,6 +69,16 @@ in
   };
 
   config = mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = cfg.keysDirectory != null;
+        message = "services.ssh-keys-manager.keysDirectory must be set when enable = true";
+      }
+      {
+        assertion = cfg.username != null;
+        message = "services.ssh-keys-manager.username must be set when enable = true";
+      }
+    ];
     # Configure user's authorized keys if username is specified
     users.users = mkIf (cfg.username != null) {
       ${cfg.username} = {
