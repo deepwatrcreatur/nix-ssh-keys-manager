@@ -5,34 +5,14 @@ with lib;
 let
   cfg = config.programs.ssh-known-hosts-manager;
 
-  # Use the centralized and corrected parser
-  parseSSHConfig = import ../../lib/parse-ssh-config.nix { inherit lib; };
+  knownHostsFromDir = import ../../lib/known-hosts.nix { inherit lib; };
 
-  hostToIP = if cfg.sshConfigFile != null then
-    parseSSHConfig (builtins.readFile cfg.sshConfigFile)
-  else {};
-  
-  # Read host keys (pattern: {hostname}-host-ed25519.pub)
-  hostKeyFiles = if cfg.keysDirectory != null then
-    builtins.attrNames (
-      filterAttrs (name: type: 
-        type == "regular" && hasSuffix "-host-ed25519.pub" name
-      ) (builtins.readDir cfg.keysDirectory)
-    )
-  else [];
-  
-  # Convert to known_hosts format with hostname,IP
-  knownHostsEntries = concatMapStringsSep "\n" (file:
-    let
-      hostname = removeSuffix "-host-ed25519.pub" file;
-      key = strings.trim (builtins.readFile (cfg.keysDirectory + "/${file}"));
-      # Add IP if we have a mapping, otherwise just hostname
-      hostPattern = if hostToIP ? ${hostname}
-                    then "${hostname},${hostToIP.${hostname}}"
-                    else hostname;
-    in
-    "${hostPattern} ${key}"
-  ) hostKeyFiles;
+  knownHosts = knownHostsFromDir {
+    keysDirectory = cfg.keysDirectory;
+    sshConfigFile = cfg.sshConfigFile;
+  };
+
+  knownHostsEntries = knownHosts.knownHostsText;
 
 in
 {
