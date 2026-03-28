@@ -1,7 +1,7 @@
 { lib }:
 
 # Shared helper for collecting known_hosts data from a directory of
-# *-host-ed25519.pub files and an optional ssh-config file.
+# *-host-*.pub files (e.g. -host-ed25519.pub, -host-rsa.pub) and an optional ssh-config file.
 { keysDirectory, sshConfigFile ? null }:
 
 let
@@ -14,14 +14,18 @@ let
   hostKeyFiles = if keysDirectory != null then
     builtins.attrNames (
       lib.filterAttrs (name: type:
-        type == "regular" && lib.hasSuffix "-host-ed25519.pub" name
+        type == "regular"
+        && lib.hasSuffix ".pub" name
+        && lib.hasInfix "-host-" name
       ) (builtins.readDir keysDirectory)
     )
   else [];
 
   mkEntry = file:
     let
-      hostname = lib.removeSuffix "-host-ed25519.pub" file;
+      hostname =
+        let base = lib.removeSuffix ".pub" file;
+        in lib.head (lib.splitString "-host-" base);
       key = lib.strings.trim (builtins.readFile (keysDirectory + "/${file}"));
       parts = lib.splitString " " key;
       keyType = if lib.length parts > 0 then lib.elemAt parts 0 else "ssh-ed25519";
