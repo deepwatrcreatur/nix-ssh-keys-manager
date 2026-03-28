@@ -1,5 +1,7 @@
 let
   lib = import <nixpkgs/lib>;
+  parseSSHConfig = import ./lib/parse-ssh-config.nix { inherit lib; };
+
   content = ''
     Host server1
       User myuser
@@ -9,21 +11,9 @@ let
     Host gateway
       IdentityFile ~/.ssh/id_rsa
       Hostname 10.10.10.1
-  '';
-  lines = lib.splitString "\n" content;
-  cleanLines = map (line: lib.strings.trim line) (lib.filter (line: 
-    !(lib.hasPrefix "#" (lib.strings.trim line)) && (lib.strings.trim line) != ""
-  ) lines);
 
-  result = lib.foldl (state: line:
-    if lib.hasPrefix "Host " line && line != "Host *" then
-      { inherit (state) map; currentHost = lib.removePrefix "Host " line; }
-    else if state.currentHost != null && (lib.hasPrefix "Hostname " line || lib.hasPrefix "HostName " line) then
-      let
-        ip = if lib.hasPrefix "Hostname " line then lib.removePrefix "Hostname " line else lib.removePrefix "HostName " line;
-      in
-      { map = state.map // { "${state.currentHost}" = ip; }; currentHost = null; }
-    else
-      state
-  ) { map = {}; currentHost = null; } cleanLines;
-in result.map
+    Host *
+      Hostname 192.0.2.1
+  '';
+in
+parseSSHConfig content
