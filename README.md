@@ -192,3 +192,11 @@ MIT License - See LICENSE file for details.
 ## Contributing
 
 Issues and pull requests welcome at https://github.com/deepwatrcreatur/nix-ssh-keys-manager
+
+## Agent Work Queue
+
+If you are assigning or running coding agents, start here:
+
+- [`docs/work-items/START-HERE.md`](docs/work-items/START-HERE.md)
+
+The seed roadmap behind that queue is tracked in [`docs/improvements.md`](docs/improvements.md).
