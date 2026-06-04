@@ -36,8 +36,33 @@
         # Parse ssh-config file to extract Host -> Hostname mappings
         parseSSHConfig = import ./lib/parse-ssh-config.nix { inherit lib; };
 
-        # Read all public keys from a directory
+        # Read all public keys from a directory into a map
+        readSSHKeysMap = import ./lib/read-ssh-keys-map.nix { inherit lib; };
+
+        # Read all public keys from a directory as a list
         readSSHKeys = import ./lib/read-ssh-keys.nix { inherit lib; };
+
+        # Shared helper for collecting known_hosts data
+        knownHostsFromDir = import ./lib/known-hosts.nix { inherit lib; };
+      };
+
+
+      # Demo apps to show off library usage
+      apps.${system} = {
+        known-hosts-demo = {
+          type = "app";
+          program = let
+            knownHosts = import ./lib/known-hosts.nix { inherit lib; } {
+              keysDirectory = ./tests/fixtures/known-hosts;
+            };
+          in "${pkgs.writeShellScriptBin "known-hosts-demo" "echo '${knownHosts.knownHostsText}'"}/bin/known-hosts-demo";
+        };
+        authorized-keys-demo = {
+          type = "app";
+          program = let
+            keys = import ./lib/read-ssh-keys.nix { inherit lib; } ./tests/fixtures/ssh-keys;
+          in "${pkgs.writeShellScriptBin "authorized-keys-demo" "echo '${lib.concatStringsSep "\n" keys}'"}/bin/authorized-keys-demo";
+        };
       };
 
       # Flake checks for library helpers

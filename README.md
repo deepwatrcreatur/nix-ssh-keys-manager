@@ -164,6 +164,36 @@ nano ~/.ssh/authorized_keys_dynamic
 
 NixOS-managed keys in `~/.ssh/authorized_keys` remain immutable and declarative.
 
+## Library Usage
+
+You can also use the library functions directly in your own Nix expressions:
+
+```nix
+{
+  # Accessing via the flake input
+  lib = inputs.ssh-keys-manager.lib;
+
+  # 1. Parse an SSH config file for Host -> Hostname mappings
+  hostMappings = lib.parseSSHConfig (builtins.readFile ./ssh-config);
+  # Result: { "server1" = "10.10.10.20"; ... }
+
+  # 2. Read all public keys from a directory into a list
+  allKeys = lib.readSSHKeys ./ssh-keys;
+  # Result: [ "ssh-ed25519 AAAA...", "ssh-ed25519 BBBB..." ]
+
+  # 3. Read all public keys into a filename -> content map
+  keysMap = lib.readSSHKeysMap ./ssh-keys;
+  # Result: { "user@host.pub" = "ssh-ed25519 AAAA..."; ... }
+
+  # 4. Generate known_hosts data from a directory and optional config
+  knownHosts = lib.knownHostsFromDir {
+    keysDirectory = ./ssh-keys;
+    sshConfigFile = ./ssh-config;
+  };
+  # knownHosts.knownHostsText is the formatted string for known_hosts file
+}
+```
+
 ## Comparison with Alternatives
 
 | Approach | Complexity | Certificate Expiry | Renewal Required | Setup Time |
