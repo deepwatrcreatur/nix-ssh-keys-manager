@@ -5,24 +5,15 @@ with lib;
 let
   cfg = config.services.ssh-keys-manager;
   
-  # Read all .pub files from the keys directory
-  pubKeyFiles = if cfg.keysDirectory != null then
-    builtins.attrNames (
-      filterAttrs (name: type: 
-        type == "regular" && hasSuffix ".pub" name
-      ) (builtins.readDir cfg.keysDirectory)
-    )
-  else [];
+  readSSHKeysMap = import ../../lib/read-ssh-keys-map.nix { inherit lib; };
+  allKeysMap = if cfg.keysDirectory != null then readSSHKeysMap cfg.keysDirectory else {};
 
-  # Filter files by username if specified
-  filteredKeyFiles = if cfg.username != null then
-    filter (file: strings.hasPrefix "${cfg.username}@" file) pubKeyFiles
-  else pubKeyFiles;
+  # Filter keys by username if specified
+  filteredKeysMap = if cfg.username != null then
+    filterAttrs (file: _: strings.hasPrefix "${cfg.username}@" file) allKeysMap
+  else allKeysMap;
 
-  # Read content of each filtered public key file
-  userKeys = map (file: 
-    strings.trim (builtins.readFile (cfg.keysDirectory + "/${file}"))
-  ) filteredKeyFiles;
+  userKeys = attrValues filteredKeysMap;
 
 in
 {

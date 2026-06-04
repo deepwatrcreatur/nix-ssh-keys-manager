@@ -10,6 +10,8 @@ This document tracks notable improvements and ideas for future work.
 - **Module assertions for required options**: Added assertions to the SSH key and known-hosts modules to require `keysDirectory` (and `username` where applicable) when enabled, failing fast with clear messages for misconfigurations.
 - **Shared SSH key-reading helper**: Introduced `lib/read-ssh-keys-map.nix` and refactored `lib/read-ssh-keys.nix` to use it, centralizing the logic for reading and trimming `.pub` keys.
 - **Shared known-hosts helper and demo apps**: Introduced `lib/known-hosts.nix` and refactored both the NixOS and home-manager `ssh-known-hosts` modules to consume it, ensuring consistent host/IP resolution and known_hosts generation. The helper safely parses hostnames from `{hostname}-host-{keytype}.pub` filenames (even when hostnames contain `-host-`) and collapses multiple host keys down to a single preferred key per host (preferring `ssh-ed25519` over `ssh-rsa`). Added small `nix run .#known-hosts-demo` and `nix run .#authorized-keys-demo` apps that print sample `known_hosts` and `authorized_keys` lines derived from fixtures.
+- **Further module deduplication**: Wire remaining modules that still contain inline key-reading logic to use the shared helpers for even more reuse. Refactored `modules/nixos/ssh-keys.nix` to use `lib.readSSHKeysMap`.
+- **Additional documentation**: Document the `lib.parseSSHConfig`, `lib.readSSHKeys`, and `lib/known-hosts.nix` helpers in `README.md` with short usage examples for users who want to consume them directly.
 
 ## Future improvement ideas
 
