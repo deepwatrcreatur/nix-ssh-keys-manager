@@ -83,16 +83,31 @@
 
           keysDir = ./tests/fixtures/ssh-keys;
 
+          knownHostNames = map (e: e.hostname)
+            (import ./lib/known-hosts.nix { inherit lib; } {
+              keysDirectory = ./tests/fixtures/known-hosts-names;
+            }).entries;
+
           # Evaluate assertions at Nix evaluation time; build is a no-op if they pass
           _assertParse = assert parseSSHConfig sampleConfig == { server1 = "10.10.10.20"; }; true;
           _assertRead = assert readSSHKeys keysDir == [
             "ssh-ed25519 AAAA server1"
             "ssh-ed25519 BBBB server2"
           ]; true;
+          # Host names that end in or contain "-host" keep it.
+          _assertHostNames = assert knownHostNames == [
+            "authentik-host"
+            "my-host-a"
+            "plain"
+          ]; true;
         in
         pkgs.stdenvNoCC.mkDerivation {
           name = "nix-ssh-keys-manager-lib-tests";
-          buildCommand = "echo lib tests passed > $out";
+          # GOTCHA: unreferenced let bindings are never evaluated; the asserts
+          # only run because buildCommand depends on them.
+          buildCommand =
+            assert _assertParse && _assertRead && _assertHostNames;
+            "echo lib tests passed > $out";
         };
     };
 }

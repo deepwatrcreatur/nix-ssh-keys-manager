@@ -11,7 +11,7 @@ Simplifies multi-host SSH infrastructure by automatically managing `authorized_k
 - 🌐 **Home-manager module** - Auto-generates `known_hosts` with hostname and IP entries
 - 🔀 **Hybrid approach** - Immutable NixOS-managed keys + mutable dynamic keys
 - 📝 **SSH config parsing** - Extracts hostname → IP mappings for enhanced known_hosts
-- 🏷️ **Naming conventions** - `{hostname}-host-ed25519.pub` for host keys, `user@host-ed25519.pub` for user keys
+- 🏷️ **Naming conventions** - `{hostname}-host-ed25519.pub` for host keys, `user@host-ed25519.pub` for user keys. The host name is everything before the last `-host-`, so `authentik-host-host-ed25519.pub` is the key for `authentik-host`. A name must match a `Host` entry in `sshConfigFile` to get its IP
 
 ## Use Cases
 

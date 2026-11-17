@@ -26,12 +26,15 @@ let
       hostname =
         let
           base = lib.removeSuffix ".pub" file;
-          parts = lib.splitString "-host-" base;
+          # GOTCHA: split at the LAST "-host-" with a greedy match. splitString
+          # consumes overlapping matches, so "authentik-host-host-ed25519"
+          # would yield "authentik" instead of "authentik-host".
+          m = builtins.match "(.+)-host-(.+)" base;
         in
-          if lib.length parts < 2 || lib.head parts == "" || lib.last parts == "" then
+          if m == null then
             throw "Invalid host key filename: ${file} (expected {hostname}-host-{keytype}.pub)"
           else
-            lib.concatStringsSep "-host-" (lib.init parts);
+            lib.head m;
       key = lib.strings.trim (builtins.readFile (keysDirectory + "/${file}"));
       parts = lib.splitString " " key;
       keyType = if lib.length parts > 0 then lib.elemAt parts 0 else "ssh-ed25519";
