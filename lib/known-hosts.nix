@@ -28,8 +28,9 @@ let
           base = lib.removeSuffix ".pub" file;
           # GOTCHA: split at the LAST "-host-" with a greedy match. splitString
           # consumes overlapping matches, so "authentik-host-host-ed25519"
-          # would yield "authentik" instead of "authentik-host".
-          m = builtins.match "(.+)-host-(.+)" base;
+          # would yield "authentik" instead of "authentik-host". The key type
+          # must be non-empty and dash-free, so "x-host-ed25519-host-" throws.
+          m = builtins.match "(.+)-host-([^-]+)" base;
         in
           if m == null then
             throw "Invalid host key filename: ${file} (expected {hostname}-host-{keytype}.pub)"

@@ -83,6 +83,12 @@
 
           keysDir = ./tests/fixtures/ssh-keys;
 
+          # Malformed name (empty key type) must throw, not parse as "server".
+          badNameRejected = !(builtins.tryEval (builtins.deepSeq
+            (import ./lib/known-hosts.nix { inherit lib; } {
+              keysDirectory = ./tests/fixtures/known-hosts-bad;
+            }).entries true)).success;
+
           knownHostNames = map (e: e.hostname)
             (import ./lib/known-hosts.nix { inherit lib; } {
               keysDirectory = ./tests/fixtures/known-hosts-names;
@@ -100,13 +106,14 @@
             "my-host-a"
             "plain"
           ]; true;
+          _assertBadName = assert badNameRejected; true;
         in
         pkgs.stdenvNoCC.mkDerivation {
           name = "nix-ssh-keys-manager-lib-tests";
           # GOTCHA: unreferenced let bindings are never evaluated; the asserts
           # only run because buildCommand depends on them.
           buildCommand =
-            assert _assertParse && _assertRead && _assertHostNames;
+            assert _assertParse && _assertRead && _assertHostNames && _assertBadName;
             "echo lib tests passed > $out";
         };
     };
